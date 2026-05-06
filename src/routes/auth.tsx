@@ -51,15 +51,7 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    try {
-      const { lovable } = await import("@/integrations/lovable/index");
-      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/onboarding` });
-      if (result.error) toast.error("Erro com Google");
-    } catch {
-      toast.error("Login com Google indisponível");
-    }
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-12">
@@ -104,9 +96,7 @@ function AuthPage() {
             {busy ? "..." : mode === "signup" ? "Criar conta" : "Entrar"}
           </Button>
 
-          <Button type="button" variant="outline" onClick={google} className="w-full h-11 border-border">
-            Continuar com Google
-          </Button>
+
 
           <p className="text-center text-sm text-muted-foreground pt-2">
             {mode === "signup" ? "Já tens conta?" : "Sem conta?"}{" "}
