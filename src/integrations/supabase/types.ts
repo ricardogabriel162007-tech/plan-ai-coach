@@ -14,7 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          age: number | null
+          created_at: string
+          days_per_week: number | null
+          experience: string | null
+          height: number | null
+          id: string
+          onboarding_completed: boolean
+          session_time: number | null
+          sex: string | null
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          days_per_week?: number | null
+          experience?: string | null
+          height?: number | null
+          id?: string
+          onboarding_completed?: boolean
+          session_time?: number | null
+          sex?: string | null
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          days_per_week?: number | null
+          experience?: string | null
+          height?: number | null
+          id?: string
+          onboarding_completed?: boolean
+          session_time?: number | null
+          sex?: string | null
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      user_goals: {
+        Row: {
+          created_at: string
+          goal: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_plans: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          plan_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          plan_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          plan_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
