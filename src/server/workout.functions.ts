@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 const PROMPT_BASE = `És um personal trainer experiente e especializado. Com base nos dados do utilizador fornecidos, cria um plano de treino semanal personalizado e detalhado. Responde APENAS com um objeto JSON válido, sem qualquer texto adicional, markdown ou formatação extra. O JSON deve seguir exatamente o schema fornecido.
 
@@ -20,21 +20,34 @@ Schema obrigatório:
           "sets": number,
           "reps": "string (ex: 8-12)",
           "rest_seconds": number,
-          "description": "string com instruções técnicas de execução em português",
+          "description": "string em português",
           "image_search_term": "string em inglês"
         }
       ]
     }
   ],
-  "notes": "string com recomendações gerais em português"
+  "notes": "string em português"
 }
 
 Regras:
-- Inclui exatamente 7 dias na weekly_structure (do utilizador, na ordem da semana). Em dias sem treino, session_type = "Descanso" e exercises = [].
-- O número de dias de treino (não-descanso) deve corresponder à frequência indicada.
-- A duration_minutes em dias de treino deve ser ~ a duração indicada pelo utilizador.
-- Cada exercício deve ter um id (gera um uuid v4 plausível, formato 8-4-4-4-12 hex).
+- Inclui exatamente 7 dias na weekly_structure (Segunda a Domingo).
+- Em dias sem treino: session_type = "Descanso" e exercises = [].
+- O número de dias com treino deve corresponder à frequência do utilizador.
+- A duration_minutes em dias de treino deve aproximar a duração indicada.
+- Cada exercício precisa de um id (uuid v4 plausível).
 - Responde apenas com o JSON.`;
+
+async function getUserFromToken(token: string) {
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+  const c = createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await c.auth.getUser(token);
+  if (error || !data.user) throw new Error("UNAUTHORIZED");
+  return { userId: data.user.id, supabase: createClient<Database>(url, key, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  }) };
+}
 
 async function callAI(systemPrompt: string, userPrompt: string) {
   const apiKey = process.env.LOVABLE_API_KEY;
@@ -60,27 +73,24 @@ async function callAI(systemPrompt: string, userPrompt: string) {
   const json = await r.json();
   const content = json.choices?.[0]?.message?.content as string;
   if (!content) throw new Error("Empty AI response");
-  // Strip ```json if present
   const cleaned = content.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
   return JSON.parse(cleaned);
 }
 
 export const generateWorkoutPlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+  .inputValidator((d: { token: string }) => {
+    if (!d?.token || typeof d.token !== "string") throw new Error("Missing token");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { userId, supabase } = await getUserFromToken(data.token);
 
     const { data: profile, error: pErr } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+      .from("profiles").select("*").eq("user_id", userId).single();
     if (pErr || !profile) throw new Error("Perfil não encontrado");
 
     const { data: goalsRows } = await supabase
-      .from("user_goals")
-      .select("goal")
-      .eq("user_id", userId);
+      .from("user_goals").select("goal").eq("user_id", userId);
     const goals = (goalsRows ?? []).map((g) => g.goal);
 
     const userPrompt = `Dados do utilizador:
@@ -96,41 +106,31 @@ Gera o plano de treino semanal personalizado seguindo o schema.`;
 
     const plan = await callAI(PROMPT_BASE, userPrompt);
 
-    // Deactivate previous plans
     await supabase.from("workout_plans").update({ is_active: false }).eq("user_id", userId).eq("is_active", true);
-
     const { data: inserted, error: insErr } = await supabase
       .from("workout_plans")
       .insert({ user_id: userId, plan_data: plan, is_active: true })
-      .select()
-      .single();
+      .select().single();
     if (insErr) throw new Error(insErr.message);
     return inserted;
   });
 
-const replaceSchema = z.object({
-  exercise: z.object({
-    name: z.string(),
-    muscle_group: z.string(),
-    sets: z.number(),
-    reps: z.string(),
-    rest_seconds: z.number(),
-    description: z.string().optional(),
-  }),
-});
-
 export const replaceExercise = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { exercise: { name: string; muscle_group: string; sets: number; reps: string; rest_seconds: number; description?: string } }) =>
-    replaceSchema.parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+  .inputValidator((d: {
+    token: string;
+    exercise: { name: string; muscle_group: string; sets: number; reps: string; rest_seconds: number; description?: string };
+  }) => {
+    if (!d?.token) throw new Error("Missing token");
+    if (!d?.exercise?.name) throw new Error("Missing exercise");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { userId, supabase } = await getUserFromToken(data.token);
     const { data: profile } = await supabase.from("profiles").select("experience").eq("user_id", userId).single();
     const { data: goalsRows } = await supabase.from("user_goals").select("goal").eq("user_id", userId);
     const goals = (goalsRows ?? []).map((g) => g.goal).join(", ");
 
-    const sys = `És um personal trainer. Sugere UM exercício alternativo para o mesmo grupo muscular, adequado ao nível e objetivos do utilizador. Responde APENAS com JSON válido seguindo este schema, sem markdown:
+    const sys = `És um personal trainer. Sugere UM exercício alternativo para o mesmo grupo muscular, adequado ao nível e objetivos do utilizador. Responde APENAS com JSON válido, sem markdown:
 {
   "id": "uuid",
   "name": "string",
