@@ -109,22 +109,9 @@ function WorkoutPlanPage() {
   const generate = async () => {
     setGenerating(true);
     try {
-      // Manual auth header (server fn middleware uses Bearer)
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Sessão expirada");
-      const r = await fetch("/_serverFn/" + (generateWorkoutPlan as any).functionId, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      }).catch(() => null);
-      // Fallback to useServerFn with manual fetch wrapper
-      let result;
-      if (r && r.ok) {
-        result = await r.json();
-      } else {
-        // Use the useServerFn but we need auth header — TanStack handles via fetch
-        result = await (generateFn as any)();
-      }
+      await (generateFn as any)({ data: { token: session.access_token } });
       await loadAll();
       toast.success("Plano gerado!");
     } catch (e) {
@@ -393,7 +380,9 @@ function ExerciseCard({ ex, onSave }: { ex: Exercise; onSave: (patch: Partial<Ex
   const doReplace = async () => {
     setReplacing(true);
     try {
-      const newEx: any = await (replaceFn as any)({ data: { exercise: ex } });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sessão expirada");
+      const newEx: any = await (replaceFn as any)({ data: { token: session.access_token, exercise: ex } });
       setDraft({ ...newEx, id: ex.id });
       toast.success("Sugestão pronta. Confirma e guarda.");
     } catch (e) {
