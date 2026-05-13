@@ -1,4 +1,4 @@
-export type Sex = "masculino" | "feminino" | "outro";
+export type Sex = "masculino" | "feminino";
 export type Goal =
   | "massa"
   | "gordura"
