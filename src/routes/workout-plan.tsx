@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/holygains-logo.png";
+import { AppShell } from "@/components/AppNav";
 import { goalLabels, experienceLabels, type Goal } from "@/types/onboarding";
 
 export const Route = createFileRoute("/workout-plan")({
@@ -152,13 +152,10 @@ function WorkoutPlanPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="px-5 sm:px-8 py-4 border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur z-10">
+    <AppShell>
+      <header className="px-5 sm:px-8 py-4 border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur z-20">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Holy Gainz" className="w-8 h-8 rounded-lg object-contain" />
-            <span className="text-base font-bold text-gradient-gold">Gainz</span>
-          </Link>
+          <h1 className="text-lg font-bold tracking-tight">Meu Plano</h1>
           <div className="flex items-center gap-2">
             {plan && (
               <Button variant="outline" size="sm" onClick={() => setConfirmRegen(true)} className="border-border">
@@ -166,7 +163,7 @@ function WorkoutPlanPage() {
                 Regenerar
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -212,7 +209,7 @@ function WorkoutPlanPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AppShell>
   );
 }
 
