@@ -11,8 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkoutPlanRouteImport } from './routes/workout-plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MensagensRouteImport } from './routes/mensagens'
+import { Route as ComunidadeRouteImport } from './routes/comunidade'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ComunidadePostIdRouteImport } from './routes/comunidade.$postId'
 
 const WorkoutPlanRoute = WorkoutPlanRouteImport.update({
   id: '/workout-plan',
@@ -22,6 +25,16 @@ const WorkoutPlanRoute = WorkoutPlanRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MensagensRoute = MensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComunidadeRoute = ComunidadeRouteImport.update({
+  id: '/comunidade',
+  path: '/comunidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -34,37 +47,75 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComunidadePostIdRoute = ComunidadePostIdRouteImport.update({
+  id: '/$postId',
+  path: '/$postId',
+  getParentRoute: () => ComunidadeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/comunidade': typeof ComunidadeRouteWithChildren
+  '/mensagens': typeof MensagensRoute
   '/onboarding': typeof OnboardingRoute
   '/workout-plan': typeof WorkoutPlanRoute
+  '/comunidade/$postId': typeof ComunidadePostIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/comunidade': typeof ComunidadeRouteWithChildren
+  '/mensagens': typeof MensagensRoute
   '/onboarding': typeof OnboardingRoute
   '/workout-plan': typeof WorkoutPlanRoute
+  '/comunidade/$postId': typeof ComunidadePostIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/comunidade': typeof ComunidadeRouteWithChildren
+  '/mensagens': typeof MensagensRoute
   '/onboarding': typeof OnboardingRoute
   '/workout-plan': typeof WorkoutPlanRoute
+  '/comunidade/$postId': typeof ComunidadePostIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/onboarding' | '/workout-plan'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/comunidade'
+    | '/mensagens'
+    | '/onboarding'
+    | '/workout-plan'
+    | '/comunidade/$postId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/onboarding' | '/workout-plan'
-  id: '__root__' | '/' | '/auth' | '/onboarding' | '/workout-plan'
+  to:
+    | '/'
+    | '/auth'
+    | '/comunidade'
+    | '/mensagens'
+    | '/onboarding'
+    | '/workout-plan'
+    | '/comunidade/$postId'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/comunidade'
+    | '/mensagens'
+    | '/onboarding'
+    | '/workout-plan'
+    | '/comunidade/$postId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ComunidadeRoute: typeof ComunidadeRouteWithChildren
+  MensagensRoute: typeof MensagensRoute
   OnboardingRoute: typeof OnboardingRoute
   WorkoutPlanRoute: typeof WorkoutPlanRoute
 }
@@ -85,6 +136,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mensagens': {
+      id: '/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof MensagensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comunidade': {
+      id: '/comunidade'
+      path: '/comunidade'
+      fullPath: '/comunidade'
+      preLoaderRoute: typeof ComunidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -99,12 +164,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comunidade/$postId': {
+      id: '/comunidade/$postId'
+      path: '/$postId'
+      fullPath: '/comunidade/$postId'
+      preLoaderRoute: typeof ComunidadePostIdRouteImport
+      parentRoute: typeof ComunidadeRoute
+    }
   }
 }
+
+interface ComunidadeRouteChildren {
+  ComunidadePostIdRoute: typeof ComunidadePostIdRoute
+}
+
+const ComunidadeRouteChildren: ComunidadeRouteChildren = {
+  ComunidadePostIdRoute: ComunidadePostIdRoute,
+}
+
+const ComunidadeRouteWithChildren = ComunidadeRoute._addFileChildren(
+  ComunidadeRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ComunidadeRoute: ComunidadeRouteWithChildren,
+  MensagensRoute: MensagensRoute,
   OnboardingRoute: OnboardingRoute,
   WorkoutPlanRoute: WorkoutPlanRoute,
 }

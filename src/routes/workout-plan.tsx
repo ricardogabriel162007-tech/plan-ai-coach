@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/holygains-logo.png";
+import { AppShell } from "@/components/AppNav";
 import { goalLabels, experienceLabels, type Goal } from "@/types/onboarding";
 
 export const Route = createFileRoute("/workout-plan")({
