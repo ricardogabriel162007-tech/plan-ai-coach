@@ -51,5 +51,4 @@ export const experienceLabels: Record<Experience, string> = {
 export const sexLabels: Record<Sex, string> = {
   masculino: "Masculino",
   feminino: "Feminino",
-  outro: " ",
 };
