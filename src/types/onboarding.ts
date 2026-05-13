@@ -1,4 +1,4 @@
-export type Sex = "masculino" | "feminino" | "outro";
+export type Sex = "masculino" | "feminino";
 export type Goal =
   | "massa"
   | "gordura"
@@ -51,5 +51,4 @@ export const experienceLabels: Record<Experience, string> = {
 export const sexLabels: Record<Sex, string> = {
   masculino: "Masculino",
   feminino: "Feminino",
-  outro: " ",
 };

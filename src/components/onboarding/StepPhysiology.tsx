@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { SelectCard } from "./SelectCard";
-import { User, UserRound, CircleUser } from "lucide-react";
+import { User, UserRound } from "lucide-react";
 
 interface Props {
   data: OnboardingData;
@@ -49,12 +49,11 @@ export const StepPhysiology = ({ data, update, errors }: Props) => {
 
       <div>
         <Label className="text-sm font-medium mb-3 block">Sexo</Label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {(
             [
               { value: "masculino", label: "Masculino", icon: User },
               { value: "feminino", label: "Feminino", icon: UserRound },
-              { value: "outro", label: "Outro", icon: CircleUser },
             ] as { value: Sex; label: string; icon: typeof User }[]
           ).map((opt) => (
             <SelectCard
