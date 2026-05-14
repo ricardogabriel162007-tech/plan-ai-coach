@@ -1,68 +1,41 @@
-## Redesign: Holy Gainz — Navegação principal + Comunidade + Mensagens
+## Plano — Holy Gainz: Persistência Supabase para Comunidade & Mensagens
 
-Vou estruturar a app pós-login em torno de 3 secções (Plano, Comunidade, Mensagens), com nav inferior em mobile e sidebar em desktop. Mantenho o design system atual (gold/fire, dark, shadcn/ui, logo).
+### 1. Migração de base de dados
 
-### 1. Layout principal (`/_app`)
-- Novo route layout `src/routes/_app.tsx` (pathless) que envolve as 3 secções com `<Outlet />` + nav.
-- Mover `workout-plan.tsx` → `_app.plano.tsx` (rota `/plano`) e redirecionar `/workout-plan` para manter compatibilidade.
-- Componente `AppNav`:
-  - **Mobile (< md):** bottom bar fixa, 3 ícones com label, item ativo a gold (preenchido).
-  - **Desktop (≥ md):** sidebar vertical à esquerda com logo + 3 itens.
-- Ícones lucide:
-  - Plano → `Dumbbell` (filled via `fill-current` quando ativo)
-  - Comunidade → `Users` (idem)
-  - Mensagens → `MessageCircle` por defeito; quando ativo, mesmo ícone com `fill-current` para parecer preenchido.
-- Login redireciona para `/plano` em vez de `/workout-plan`.
+Numa única migração:
+- **profiles**: `id uuid PK references auth.users(id) on delete cascade`, `username text unique not null`, `avatar_url text`, `created_at`. Trigger `handle_new_user_profile` em `auth.users` que insere com `username = NEW.email`. (A tabela `public.profiles` atual usa `user_id` separado e não tem `username` — vou criar uma tabela `public.profiles` nova com a estrutura pedida; como o utilizador pediu explicitamente "id (uuid, FK auth.users... primary key)", vou **dropar a actual `profiles`** e recriar. Workout plan e onboarding usam `user_id` directo de `auth.users` em outras tabelas, não dependem da PK de profiles.)
+- **forum_posts**, **forum_replies**, **forum_votes**, **messages** com RLS conforme spec.
+- Realtime: `alter publication supabase_realtime add table` para `forum_posts`, `forum_replies`, `messages` + `replica identity full`.
+- Função `has_voted` e índices úteis.
 
-### 2. Comunidade (`/comunidade`)
-Ficheiros:
-- `src/routes/_app.comunidade.tsx` — feed
-- `src/routes/_app.comunidade.$postId.tsx` — detalhe
-- `src/lib/community-mock.ts` — mock data (posts + respostas + utilizadores)
-- `src/components/community/PostCard.tsx`, `CreatePostDialog.tsx`, `HashtagFilter.tsx`
+**Aviso**: a tabela `profiles` actual contém dados de onboarding (age, weight, sex, days_per_week, etc.). Vou **manter esses campos** na recriação para não partir o onboarding — só ajusto a PK e adiciono `username` + `avatar_url`. Trigger `handle_new_user` actualizado para inserir `id = NEW.id` e `username = NEW.email`.
 
-Feed:
-- Header com título "Comunidade" + botão `+ Criar Tópico` (gradiente gold) que abre `Dialog` com título + textarea + Publicar (adiciona ao estado mock local).
-- Faixa horizontal scroll com hashtags (#pernas, #nutrição, #motivação, #iniciantes…) — clicar filtra a lista.
-- Lista de cards estilo Reddit: à esquerda coluna de upvote (seta cima + contador, otimista no estado local); à direita avatar+username, hashtags, título destacado, preview, rodapé com `MessageSquare` + nº respostas e timestamp relativo (`há 2 horas` via util simples).
-- Card todo clicável → `/comunidade/:postId`.
+### 2. Helpers de cliente
 
-Detalhe:
-- Post completo no topo (mesmo cartão expandido).
-- Lista de respostas (avatar, nome, timestamp, texto).
-- Form no fundo (textarea + botão Responder) que adiciona à lista mock em memória.
+- `src/lib/community-api.ts`: `listPosts`, `getPost`, `createPost`, `updatePost`, `deletePost`, `listReplies`, `createReply`, `updateReply`, `deleteReply`, `markBestAnswer`, `vote(targetId, targetType, voteType)` (toggle/swap), `getVoteCounts`, `getMyVote`. Tudo via `supabase` client.
+- `src/lib/messages-api.ts`: `listConversations(userId)`, `listMessages(a,b)`, `sendMessage`, `searchProfiles`.
+- `src/lib/profiles-api.ts`: `getMyProfile`, `searchProfiles(query)`.
 
-### 3. Mensagens (`/mensagens`)
-Ficheiros:
-- `src/routes/_app.mensagens.tsx` — lista + chat
-- `src/lib/messages-mock.ts` — conversas mock
-- `src/components/messages/ConversationList.tsx`, `ChatView.tsx`, `MessageBubble.tsx`
+### 3. Comunidade
 
-Layout responsivo (sem subrota; estado interno):
-- **Desktop:** split — coluna esquerda (320px) com lista de conversas, coluna direita com chat ativo.
-- **Mobile:** mostra só a lista; ao tocar numa conversa mostra só o chat com botão `←` para voltar.
-- Lista: avatar, nome, preview da última mensagem (truncado), timestamp; item ativo realçado a gold.
-- Chat:
-  - Header com avatar+nome do interlocutor.
-  - Área scrollável com balões: mensagens próprias à direita com `bg-primary text-primary-foreground rounded-2xl`, do outro à esquerda com `bg-card border rounded-2xl`. Timestamp pequeno por baixo.
-  - Footer: `Input` + botão `Send` (gold). Enter envia; adiciona à conversa em memória.
+- `src/routes/comunidade.tsx`: substituir mock por `useQuery` + realtime channel em `forum_posts`. Modal de criação ganha campo **Tipo** (Discussão/Dúvida) via Select. Cards mostram net votes (calculados via subquery/agregado client-side). Botões up/down (`ArrowUp`/`ArrowDown`) com toggle. Menu `MoreVertical` (DropdownMenu) nos posts do autor: Editar (reabre modal pré-preenchido) / Apagar (AlertDialog).
+- `src/routes/comunidade.$postId.tsx`: query do post + replies (realtime em `forum_replies` filtrado por `post_id`). Replies mostram menu se for autor. Se `post.type = 'duvida'` e viewer = autor do post, cada reply tem botão `CheckCircle` para marcar best answer (única). Best answer aparece no topo com destaque verde.
 
-### 4. Detalhes técnicos
-- Tudo client-side, mock data em módulos `src/lib/*-mock.ts` com `useState` por página (sem persistência, sem Supabase).
-- Helper `timeAgo(date)` em `src/lib/time.ts` (pt-PT: "agora", "há X min", "há X h", "há X d").
-- Proteção: `_app.tsx` verifica `useAuth`; se sem sessão → `/auth`.
-- Sem alterações ao schema, sem migrations, sem novas dependências.
+### 4. Mensagens
 
-### Estrutura final de rotas
-```text
-/                     landing (público)
-/auth                 login
-/onboarding           onboarding
-/_app                 layout com nav (protegido)
-  /plano              (era /workout-plan)
-  /comunidade
-  /comunidade/:postId
-  /mensagens
-```
+- `src/routes/mensagens.tsx`: substituir mock. Lista de conversas = agregado de `messages` onde user é sender ou receiver, agrupado por outro participante (computado client-side). Botão `PenSquare` no topo abre Dialog com Input de pesquisa que chama `searchProfiles`. Selecção abre chat (sem duplicar — usa o other-user-id como conversation key). Realtime subscription em `messages` filtrado por `receiver_id=eq.<me>` para receber novas e por `sender_id` para sincronizar ecos.
 
-Confirma que posso prosseguir — em particular: (a) renomear `/workout-plan` para `/plano` está OK? (b) ícones de Plano e Comunidade também devem ficar "preenchidos" quando ativos, certo?
+### 5. Detalhes técnicos
+
+- Voto: lógica server-side é só upsert/delete. Cálculo de score: client busca todos votos do post (count up - count down) — para escala pequena, ok. Posso usar uma view `forum_post_scores` para optimizar mais tarde; **vou começar com fetch directo** (`select target_id, vote_type` para os ids visíveis).
+- Best answer: ao marcar, `update forum_replies set is_best_answer=false where post_id=X` e depois `set true where id=reply_id`.
+- Realtime: 1 channel por página, cleanup no unmount.
+- Authenticação: todas páginas já redirecionam para `/auth` se não houver session.
+
+### 6. Não muda
+
+Design system, navegação, biblioteca, workout plan, onboarding.
+
+---
+
+**Próximo passo**: vou correr a migração SQL primeiro (precisa aprovação tua). Depois implemento o código.
