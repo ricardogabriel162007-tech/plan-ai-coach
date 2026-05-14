@@ -86,7 +86,7 @@ export const generateWorkoutPlan = createServerFn({ method: "POST" })
     const { userId, supabase } = await getUserFromToken(data.token);
 
     const { data: profile, error: pErr } = await supabase
-      .from("profiles").select("*").eq("user_id", userId).single();
+      .from("profiles").select("*").eq("id", userId).single();
     if (pErr || !profile) throw new Error("Perfil não encontrado");
 
     const { data: goalsRows } = await supabase
@@ -126,7 +126,7 @@ export const replaceExercise = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const { userId, supabase } = await getUserFromToken(data.token);
-    const { data: profile } = await supabase.from("profiles").select("experience").eq("user_id", userId).single();
+    const { data: profile } = await supabase.from("profiles").select("experience").eq("id", userId).single();
     const { data: goalsRows } = await supabase.from("user_goals").select("goal").eq("user_id", userId);
     const goals = (goalsRows ?? []).map((g) => g.goal).join(", ");
 

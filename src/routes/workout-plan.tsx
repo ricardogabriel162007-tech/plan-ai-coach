@@ -88,7 +88,7 @@ function WorkoutPlanPage() {
     if (!user) return;
     setLoading(true);
     const [{ data: prof }, { data: g }, { data: pl }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("user_id", user.id).single(),
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("user_goals").select("goal").eq("user_id", user.id),
       supabase.from("workout_plans").select("*").eq("user_id", user.id).eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);

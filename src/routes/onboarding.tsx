@@ -75,7 +75,7 @@ function OnboardingPage() {
         days_per_week: data.daysPerWeek,
         session_time: parseInt(data.sessionTime!),
         onboarding_completed: true,
-      }).eq("user_id", user.id);
+      }).eq("id", user.id);
       if (pErr) throw pErr;
 
       // Replace goals
