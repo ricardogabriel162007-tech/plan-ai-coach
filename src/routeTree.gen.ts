@@ -13,6 +13,7 @@ import { Route as WorkoutPlanRouteImport } from './routes/workout-plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MensagensRouteImport } from './routes/mensagens'
 import { Route as ComunidadeRouteImport } from './routes/comunidade'
+import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComunidadePostIdRouteImport } from './routes/comunidade.$postId'
@@ -37,6 +38,11 @@ const ComunidadeRoute = ComunidadeRouteImport.update({
   path: '/comunidade',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BibliotecaRoute = BibliotecaRouteImport.update({
+  id: '/biblioteca',
+  path: '/biblioteca',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -56,6 +62,7 @@ const ComunidadePostIdRoute = ComunidadePostIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/biblioteca': typeof BibliotecaRoute
   '/comunidade': typeof ComunidadeRouteWithChildren
   '/mensagens': typeof MensagensRoute
   '/onboarding': typeof OnboardingRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/biblioteca': typeof BibliotecaRoute
   '/comunidade': typeof ComunidadeRouteWithChildren
   '/mensagens': typeof MensagensRoute
   '/onboarding': typeof OnboardingRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/biblioteca': typeof BibliotecaRoute
   '/comunidade': typeof ComunidadeRouteWithChildren
   '/mensagens': typeof MensagensRoute
   '/onboarding': typeof OnboardingRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/biblioteca'
     | '/comunidade'
     | '/mensagens'
     | '/onboarding'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/biblioteca'
     | '/comunidade'
     | '/mensagens'
     | '/onboarding'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/biblioteca'
     | '/comunidade'
     | '/mensagens'
     | '/onboarding'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BibliotecaRoute: typeof BibliotecaRoute
   ComunidadeRoute: typeof ComunidadeRouteWithChildren
   MensagensRoute: typeof MensagensRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/comunidade'
       fullPath: '/comunidade'
       preLoaderRoute: typeof ComunidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biblioteca': {
+      id: '/biblioteca'
+      path: '/biblioteca'
+      fullPath: '/biblioteca'
+      preLoaderRoute: typeof BibliotecaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -189,6 +209,7 @@ const ComunidadeRouteWithChildren = ComunidadeRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BibliotecaRoute: BibliotecaRoute,
   ComunidadeRoute: ComunidadeRouteWithChildren,
   MensagensRoute: MensagensRoute,
   OnboardingRoute: OnboardingRoute,

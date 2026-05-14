@@ -1,17 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Dumbbell, Users, MessageCircle, LogOut } from "lucide-react";
+import { Dumbbell, Users, MessageCircle, LogOut, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/holygains-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
 type Item = {
-  to: "/workout-plan" | "/comunidade" | "/mensagens";
+  to: "/workout-plan" | "/biblioteca" | "/comunidade" | "/mensagens";
   label: string;
   icon: typeof Dumbbell;
 };
 
 const items: Item[] = [
   { to: "/workout-plan", label: "Plano", icon: Dumbbell },
+  { to: "/biblioteca", label: "Biblioteca", icon: Library },
   { to: "/comunidade", label: "Comunidade", icon: Users },
   { to: "/mensagens", label: "Mensagens", icon: MessageCircle },
 ];
