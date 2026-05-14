@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Dumbbell, Users, MessageCircle, LogOut } from "lucide-react";
+import { Dumbbell, Users, MessageCircle, LogOut, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/holygains-logo.png";
 import { supabase } from "@/integrations/supabase/client";
